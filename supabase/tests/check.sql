@@ -22,4 +22,6 @@ do $$begin
  if has_function_privilege('anon','public.jalanmy_reports()','execute') then raise exception 'Anonymous role can bypass session'; end if;
  if has_table_privilege('authenticated','jalanmy_private.reports','select') then raise exception 'Private tables exposed'; end if;
  if has_function_privilege('authenticated','jalanmy_private.quota(text,integer)','execute') then raise exception 'Internal helper exposed'; end if;
+ if has_function_privilege('anon','public.jalanmy_client_config()','execute') then raise exception 'Configuration exposed without session'; end if;
+ if has_table_privilege('authenticated','jalanmy_private.client_config','select') then raise exception 'Configuration table exposed'; end if;
 end$$;

@@ -5,8 +5,8 @@ const env=(import.meta as ImportMeta&{env:Record<string,string>}).env;
 const databaseUrl=env.VITE_SUPABASE_URL||projectUrl;
 const databaseKey=env.VITE_SUPABASE_ANON_KEY||publishableKey;
 export const reportsConfigured=Boolean(databaseUrl&&databaseKey);
-export const freeConfigured=Boolean(env.VITE_GEOAPIFY_KEY&&reportsConfigured);
-export const geoKey=env.VITE_GEOAPIFY_KEY||'';
+export let freeConfigured=Boolean(env.VITE_GEOAPIFY_KEY&&reportsConfigured);
+export let geoKey=env.VITE_GEOAPIFY_KEY||'';
 const supabase=reportsConfigured?createClient(databaseUrl,databaseKey):null;
 let signingIn:Promise<void>|null=null;
 async function session(){
@@ -17,7 +17,16 @@ async function session(){
 async function rpc(name:string,args:Record<string,unknown>={}){
   await session();const {data,error}=await supabase!.rpc(name,args);if(error)throw new Error(error.message);return data;
 }
+let configRequest:Promise<void>|null=null;
+export async function loadMapConfig(){
+  if(geoKey||!reportsConfigured)return;
+  configRequest??=rpc('jalanmy_client_config').then(result=>{
+    if(typeof result?.geoapifyKey==='string'&&result.geoapifyKey.length>=16){geoKey=result.geoapifyKey;freeConfigured=true;}
+  }).finally(()=>{configRequest=null;});
+  await configRequest;
+}
 async function geo(path:string,params:Record<string,string>,signal?:AbortSignal){
+  await loadMapConfig();
   if(!geoKey)throw new Error('Perkhidmatan peta belum disambungkan. Projek Geoapify perlu diaktifkan dahulu.');
   const url=new URL('https://api.geoapify.com/v1/'+path);Object.entries({...params,apiKey:geoKey}).forEach(([key,value])=>url.searchParams.set(key,value));
   const response=await fetch(url,{signal:signal||AbortSignal.timeout(25000)});const data=await response.json();

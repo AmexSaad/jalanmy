@@ -33,4 +33,4 @@ jobs:
       - name: Validate schema, permissions and report confirmations
         env:
           PGPASSWORD: local-ci-only
-        run: psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f supabase/tests/setup.sql -f supabase/migrations/202610310001_reports.sql -f supabase/tests/check.sql
+        run: psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f supabase/tests/setup.sql -f supabase/migrations/202610310001_reports.sql -f supabase/migrations/20261031082323_client_map_config.sql -f supabase/tests/check.sql

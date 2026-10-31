@@ -2,9 +2,9 @@
 
 Android navigation app source: MapLibre, foreground GPS, car/motorcycle/bicycle/walking routes, Malay maneuver guidance and Android text-to-speech, off-route recalculation, GPS speed and community reports.
 
-**Status:** source integration is in progress. The previously delivered APK is a local prototype. The new source still needs live provider credentials, database setup, real-service integration checks and physical-device testing before it can be called complete. No paid hosting is authorized; the owner's budget is RM0.
+**Status:** Geoapify Free and Supabase Free are now connected. Live geocoding, a JB Sentral–Senai route, anonymous authentication, configuration retrieval and report RPC access have been verified. Physical-device and real-road validation are still outstanding. The APK remains a debug build, with no live traffic. No paid hosting is authorized; the owner's budget is RM0.
 
-Supabase project `jalanmy` has now been created in SUNFLY SYSTEM (Free), Singapore, ref `ufgkkmqgzuuhumsswfwn`. Community schema and permission tests passed on the live database with test records rolled back. The public project URL/publishable key are in `src/project-config.ts`. Guest sign-in was enabled with the owner's approval, and anonymous authentication plus report RPC read were verified successfully. Geoapify is still not configured. Private tables intentionally have RLS enabled with no direct client policies; only the restricted RPC surface is granted.
+Supabase project `jalanmy` has now been created in SUNFLY SYSTEM (Free), Singapore, ref `ufgkkmqgzuuhumsswfwn`. Community schema and permission tests passed on the live database with test records rolled back. The public project URL/publishable key are in `src/project-config.ts`. Guest sign-in was enabled with the owner's approval, and anonymous authentication plus report RPC read were verified successfully. Geoapify Free is configured through the authenticated client-config RPC; its key has a localhost HTTP Origin restriction for Capacitor. Private tables intentionally have RLS enabled with no direct client policies; only the restricted RPC surface is granted.
 
 ## RM0 service option
 
@@ -12,7 +12,7 @@ Geoapify Free handles maps/search/routing (3,000 credits/day, required attributi
 
 1. Create a free Geoapify project (no card required) and restrict the public application key using provider settings.
 2. Create a free Supabase project, enable anonymous sign-in, and apply `supabase/migrations/202610310001_reports.sql`. Do not upgrade to a paid plan. Enable provider abuse protection before public release; GPS and anonymous identities can be spoofed.
-3. Configure the public build settings in `.env.local` (local) or GitHub repository variables (Android CI):
+3. This project's APK retrieves its origin-restricted Geoapify client key through the authenticated `jalanmy_client_config` RPC. The provider key is not committed to GitHub. Optional overrides for a different project can be set in `.env.local` (local) or GitHub repository variables (Android CI):
 
 | Local name | GitHub variable |
 | --- | --- |
@@ -54,4 +54,3 @@ Reports expire, duplicates merge, owners cannot self-confirm, nearby independent
 GPS speed is not a calibrated speedometer. Speed limits appear only when available and a route/GPS match is sufficiently close. Free-provider mode reads speed limits from the selected route during navigation, not continuously on every road. ETA uses route estimates with no live traffic. Route alternatives depend on provider output; the free adapter currently requests one route. The Johor coverage box is approximate and routes can cross administrative boundaries. No live traffic, place reviews, transit timetable feed or complete camera database is connected.
 
 © OpenStreetMap contributors, ODbL. Geoapify Free attribution is displayed when configured. Check provider terms and quotas before release. API data requests disclose requested places/coordinates and IP addresses to the selected providers. Published report locations are shared; live GPS tracks are not intentionally persisted by the app backend.
-

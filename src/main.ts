@@ -7,7 +7,7 @@ import {categories,decodePolyline,gpsSpeed,inCoverage} from './domain.mjs';
 import {cumulative,project,instruction,aheadReport,meters} from './navigation.mjs';
 import {request,configured} from './api';
 import {speak,stopSpeech,keepAwake} from './speech';
-import {geoKey,freeConfigured} from './free-services';
+import {geoKey,freeConfigured,loadMapConfig} from './free-services';
 
 type Place={name:string;coordinate:[number,number];address?:string};
 type Report={id:string;category:string;lon:number;lat:number;createdAt:number;expiresAt:number;confirmed:number;absent:number};
@@ -40,6 +40,19 @@ const errorMessage=(e:unknown)=>e instanceof Error?e.message:'Permintaan gagal. 
 const environment=(import.meta as ImportMeta&{env:Record<string,string>}).env;
 const map=new maplibregl.Map({container:'map',center:[103.65,1.62],zoom:9.5,style:{version:8,sources:{osm:{type:'raster',tiles:[environment.VITE_TILE_URL||(geoKey?`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(geoKey)}`:'https://tile.openstreetmap.org/{z}/{x}/{y}.png')],tileSize:256,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'+(geoKey?' · Powered by <a href="https://www.geoapify.com/">Geoapify</a>':'')}},layers:[{id:'osm',type:'raster',source:'osm'}]}});
 map.addControl(new maplibregl.NavigationControl(),'top-right');
+// Configuration is retrieved through the authenticated RPC; no key is committed.
+void loadMapConfig().then(()=>{
+  if(!geoKey)return;
+  const useProvider=()=>{
+    if(environment.VITE_TILE_URL)return;
+    const source=map.getSource('osm') as maplibregl.RasterTileSource|undefined;
+    source?.setTiles([`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${encodeURIComponent(geoKey)}`]);
+    const attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Powered by <a href="https://www.geoapify.com/">Geoapify</a>';
+    map.addControl(new maplibregl.AttributionControl({customAttribution:attribution,compact:true}),'bottom-right');
+    status('Perkhidmatan jalanMY bersambung. Cari destinasi untuk bermula.');
+  };
+  if(map.isStyleLoaded())useProvider();else map.once('load',useProvider);
+}).catch(e=>status(errorMessage(e)));
 let destination:Place|null=null,origin:[number,number]|null=null,originUpdated=0,accuracy=Infinity;
 let destinationMarker:maplibregl.Marker|null=null,locationMarker:maplibregl.Marker|null=null;
 let stopLocation:(()=>void)|null=null,locationStarting=false,locationGeneration=0;
