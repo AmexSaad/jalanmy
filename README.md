@@ -4,6 +4,16 @@ Prototaip aplikasi peta Johor: MapLibre + OpenStreetMap, dengan sambungan enjin 
 
 ## Mula
 
+## APK Android ujian
+
+Di GitHub, buka **Actions → Android APK → binaan terbaru yang berjaya → Artifacts → jalanMY-johor-debug-apk**. Muat turun ZIP dan ekstrak `jalanMY-johor-debug.apk`. Perlu log masuk GitHub untuk muat turun artifact. Pasang APK pada Android 7 atau lebih baharu dengan WebView terkini. APK ini versi debug untuk ujian, belum keluaran Google Play. Binaan menggunakan debug key sementara; kemas kini mungkin memerlukan nyahpasang versi lama dan ini memadam laporan tempatan.
+
+APK memuatkan antara muka secara tempatan tetapi peta masih memerlukan internet. Tekan **Gunakan lokasi saya** untuk meminta izin lokasi Android. GPS hanya digunakan ketika aplikasi dibuka; belum ada navigasi latar belakang. Had prototaip lain di bawah masih terpakai.
+
+Projek Android dijana semula dalam CI daripada pakej Capacitor yang dikunci dalam `package-lock.json`. Untuk Android Studio, jalankan `npm run build`, `npx cap add android`, `node scripts/prepare-android.mjs`, `npx cap sync android`, kemudian `npx cap open android`. Java 21 dan SDK Android 36 diperlukan. Direktori `android/` dan kunci tandatangan tidak dimuat naik ke repo.
+
+## Pembangunan web
+
 Gunakan Node.js 22.12 atau lebih baharu.
 
 ```sh

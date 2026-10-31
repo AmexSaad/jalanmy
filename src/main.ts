@@ -1,6 +1,7 @@
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
+import { startLocation } from './location';
 import { activeReports, categories, decodePolyline, gpsSpeed, inCoverage } from './domain.mjs';
 
 type Report = {id: string; category: string; lon: number; lat: number; createdAt: number};
@@ -47,7 +48,7 @@ let locationMarker: maplibregl.Marker | null = null;
 let reportMarkers: maplibregl.Marker[] = [];
 let routeRequest: AbortController | null = null;
 let routeVersion = 0;
-let watch: number | null = null;
+let stopLocation: (() => void) | null = null;
 let reports: Report[] = [];
 try { reports = activeReports(JSON.parse(localStorage.getItem('jalanmy.reports') || '[]')); } catch { status('Simpanan laporan tidak dapat dibaca. Anda masih boleh guna peta.'); }
 
@@ -75,10 +76,10 @@ map.on('click', e => {
 });
 map.on('error', () => status('Peta mengalami masalah sambungan. Semak internet dan muat semula jika perlu.'));
 $('tolls').addEventListener('change', clearRoute);
-$('locate').onclick = () => {
+$('locate').onclick = async () => {
   if (!navigator.geolocation) return status('Pelayar ini tidak menyokong GPS.');
-  if (watch !== null) navigator.geolocation.clearWatch(watch);
-  watch = navigator.geolocation.watchPosition(position => {
+  stopLocation?.();
+  try { stopLocation = await startLocation(position => {
     const {longitude, latitude, speed} = position.coords;
     if (!inCoverage(longitude, latitude)) { origin = null; originUpdated = 0; locationMarker?.remove(); $('speed').textContent = '—'; $('origin').textContent = 'Lokasi di luar liputan percubaan.'; clearRoute(); return status('GPS anda berada di luar kawasan percubaan Johor.'); }
     origin = [longitude, latitude]; originUpdated = Date.now();
@@ -89,7 +90,7 @@ $('locate').onclick = () => {
     const value = gpsSpeed(speed); $('speed').textContent = value === null ? '—' : String(value);
     $('origin').textContent = `Lokasi GPS · ketepatan ±${Math.round(position.coords.accuracy)} m`;
     status('Lokasi diterima. Anda boleh kira laluan atau hantar laporan.');
-  }, () => { origin = null; originUpdated = 0; locationMarker?.remove(); locationMarker = null; $('speed').textContent = '—'; $('origin').textContent = 'Lokasi tidak tersedia.'; clearRoute(); status('Lokasi tidak dapat diperoleh. Benarkan akses lokasi dan cuba lagi.'); }, {enableHighAccuracy: true, maximumAge: 5000, timeout: 15000});
+  }, () => { origin = null; originUpdated = 0; locationMarker?.remove(); locationMarker = null; $('speed').textContent = '—'; $('origin').textContent = 'Lokasi tidak tersedia.'; clearRoute(); status('Lokasi tidak dapat diperoleh. Benarkan akses lokasi dan cuba lagi.'); }); } catch { status('Akses lokasi tidak tersedia. Benarkan lokasi dalam tetapan aplikasi.'); }
 };
 const freshOrigin = () => origin && Date.now() - originUpdated < 60000;
 $('route').onclick = async () => {
@@ -138,4 +139,4 @@ for (const category of categories) { const b = document.createElement('button');
 }; $('categories').append(b); }
 renderReports(); window.setInterval(renderReports, 30000);
 window.setInterval(() => { if (!freshOrigin()) $('speed').textContent = '—'; }, 5000);
-window.addEventListener('pagehide', () => { if (watch !== null) navigator.geolocation.clearWatch(watch); });
+window.addEventListener('pagehide', () => { stopLocation?.(); });
