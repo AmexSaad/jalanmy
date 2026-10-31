@@ -4,7 +4,7 @@ Android navigation app source: MapLibre, foreground GPS, car/motorcycle/bicycle/
 
 **Status:** source integration is in progress. The previously delivered APK is a local prototype. The new source still needs live provider credentials, database setup, real-service integration checks and physical-device testing before it can be called complete. No paid hosting is authorized; the owner's budget is RM0.
 
-Supabase project `jalanmy` has now been created in SUNFLY SYSTEM (Free), Singapore, ref `ufgkkmqgzuuhumsswfwn`. Community schema and permission tests passed on the live database with test records rolled back. The public project URL/publishable key are in `src/project-config.ts`. Guest sign-in activation requires the owner's specific approval; Geoapify is still not configured. Private tables intentionally have RLS enabled with no direct client policies; only the restricted RPC surface is granted.
+Supabase project `jalanmy` has now been created in SUNFLY SYSTEM (Free), Singapore, ref `ufgkkmqgzuuhumsswfwn`. Community schema and permission tests passed on the live database with test records rolled back. The public project URL/publishable key are in `src/project-config.ts`. Guest sign-in was enabled with the owner's approval, and anonymous authentication plus report RPC read were verified successfully. Geoapify is still not configured. Private tables intentionally have RLS enabled with no direct client policies; only the restricted RPC surface is granted.
 
 ## RM0 service option
 
@@ -54,3 +54,4 @@ Reports expire, duplicates merge, owners cannot self-confirm, nearby independent
 GPS speed is not a calibrated speedometer. Speed limits appear only when available and a route/GPS match is sufficiently close. Free-provider mode reads speed limits from the selected route during navigation, not continuously on every road. ETA uses route estimates with no live traffic. Route alternatives depend on provider output; the free adapter currently requests one route. The Johor coverage box is approximate and routes can cross administrative boundaries. No live traffic, place reviews, transit timetable feed or complete camera database is connected.
 
 © OpenStreetMap contributors, ODbL. Geoapify Free attribution is displayed when configured. Check provider terms and quotas before release. API data requests disclose requested places/coordinates and IP addresses to the selected providers. Published report locations are shared; live GPS tracks are not intentionally persisted by the app backend.
+
