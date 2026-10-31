@@ -1,9 +1,13 @@
 import {createClient} from '@supabase/supabase-js';
 import {geoRoutes,geoPlaces} from './geoapify.mjs';
+import {projectUrl,publishableKey} from './project-config';
 const env=(import.meta as ImportMeta&{env:Record<string,string>}).env;
-export const freeConfigured=Boolean(env.VITE_GEOAPIFY_KEY&&env.VITE_SUPABASE_URL&&env.VITE_SUPABASE_ANON_KEY);
+const databaseUrl=env.VITE_SUPABASE_URL||projectUrl;
+const databaseKey=env.VITE_SUPABASE_ANON_KEY||publishableKey;
+export const reportsConfigured=Boolean(databaseUrl&&databaseKey);
+export const freeConfigured=Boolean(env.VITE_GEOAPIFY_KEY&&reportsConfigured);
 export const geoKey=env.VITE_GEOAPIFY_KEY||'';
-const supabase=env.VITE_SUPABASE_URL&&env.VITE_SUPABASE_ANON_KEY?createClient(env.VITE_SUPABASE_URL,env.VITE_SUPABASE_ANON_KEY):null;
+const supabase=reportsConfigured?createClient(databaseUrl,databaseKey):null;
 let signingIn:Promise<void>|null=null;
 async function session(){
   if(!supabase)throw new Error('Pangkalan data belum disambungkan.');
@@ -14,6 +18,7 @@ async function rpc(name:string,args:Record<string,unknown>={}){
   await session();const {data,error}=await supabase!.rpc(name,args);if(error)throw new Error(error.message);return data;
 }
 async function geo(path:string,params:Record<string,string>,signal?:AbortSignal){
+  if(!geoKey)throw new Error('Perkhidmatan peta belum disambungkan. Projek Geoapify perlu diaktifkan dahulu.');
   const url=new URL('https://api.geoapify.com/v1/'+path);Object.entries({...params,apiKey:geoKey}).forEach(([key,value])=>url.searchParams.set(key,value));
   const response=await fetch(url,{signal:signal||AbortSignal.timeout(25000)});const data=await response.json();
   if(!response.ok)throw new Error(response.status===429?'Kuota percuma carian atau laluan dicapai. Cuba kemudian.':data.message||'Perkhidmatan peta tidak tersedia.');return data;

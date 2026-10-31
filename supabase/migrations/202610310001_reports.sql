@@ -11,6 +11,7 @@ create table if not exists jalanmy_private.reports (
   removed boolean not null default false
 );
 create index if not exists reports_active on jalanmy_private.reports(expires) where not removed;
+create index if not exists reports_owner on jalanmy_private.reports(owner);
 create table if not exists jalanmy_private.votes (
   report uuid not null references jalanmy_private.reports(id) on delete cascade,
   voter uuid not null references auth.users(id) on delete cascade,
@@ -20,6 +21,7 @@ create table if not exists jalanmy_private.quotas (
   who uuid not null references auth.users(id) on delete cascade, action text not null,
   bucket bigint not null, n integer not null, primary key(who,action,bucket)
 );
+create index if not exists votes_voter on jalanmy_private.votes(voter);
 alter table jalanmy_private.reports enable row level security;
 alter table jalanmy_private.votes enable row level security;
 alter table jalanmy_private.quotas enable row level security;
@@ -44,7 +46,7 @@ begin
 end;
 $$;
 
-create or replace function public.jalanmy_reports() returns jsonb
+create or replace function jalanmy_private.api_reports() returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare result jsonb;
 begin
@@ -63,7 +65,7 @@ begin
 end;
 $$;
 
-create or replace function public.jalanmy_report(category text,coordinate double precision[]) returns jsonb
+create or replace function jalanmy_private.api_report(category text,coordinate double precision[]) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare rid uuid;
 begin
@@ -72,7 +74,7 @@ begin
  perform jalanmy_private.quota('report',5);
  -- Serialize per category to make nearby duplicate detection atomic.
  perform pg_advisory_xact_lock(hashtext(category));
- select r.id into rid from jalanmy_private.reports r where r.category=jalanmy_report.category
+ select r.id into rid from jalanmy_private.reports r where r.category=api_report.category
    and not r.removed and r.expires>now() and jalanmy_private.distance(r.lon,r.lat,coordinate[1],coordinate[2])<100 limit 1;
  if rid is not null then return jsonb_build_object('id',rid,'merged',true); end if;
  insert into jalanmy_private.reports(owner,category,lon,lat) values(auth.uid(),category,coordinate[1],coordinate[2]) returning id into rid;
@@ -80,7 +82,7 @@ begin
 end;
 $$;
 
-create or replace function public.jalanmy_vote(report_id uuid,coordinate double precision[],present boolean) returns jsonb
+create or replace function jalanmy_private.api_vote(report_id uuid,coordinate double precision[],present boolean) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare r jalanmy_private.reports; yes_count integer; no_count integer;
 begin
@@ -107,6 +109,17 @@ begin
 end;
 $$;
 revoke all on all functions in schema jalanmy_private from public,anon,authenticated;
+-- Invoker wrappers expose the deliberate RPC surface. Tables remain inaccessible.
+create or replace function public.jalanmy_reports() returns jsonb
+ language sql security invoker set search_path='' as $$select jalanmy_private.api_reports()$$;
+create or replace function public.jalanmy_report(category text,coordinate double precision[]) returns jsonb
+ language sql security invoker set search_path='' as $$select jalanmy_private.api_report(category,coordinate)$$;
+create or replace function public.jalanmy_vote(report_id uuid,coordinate double precision[],present boolean) returns jsonb
+ language sql security invoker set search_path='' as $$select jalanmy_private.api_vote(report_id,coordinate,present)$$;
+grant usage on schema jalanmy_private to authenticated;
+grant execute on function jalanmy_private.api_reports() to authenticated;
+grant execute on function jalanmy_private.api_report(text,double precision[]) to authenticated;
+grant execute on function jalanmy_private.api_vote(uuid,double precision[],boolean) to authenticated;
 revoke all on function public.jalanmy_reports() from public,anon;
 revoke all on function public.jalanmy_report(text,double precision[]) from public,anon;
 revoke all on function public.jalanmy_vote(uuid,double precision[],boolean) from public,anon;

@@ -20,5 +20,6 @@ reset role;
 -- Verify clients cannot invoke these RPCs without an authenticated user.
 do $$begin
  if has_function_privilege('anon','public.jalanmy_reports()','execute') then raise exception 'Anonymous role can bypass session'; end if;
- if has_schema_privilege('authenticated','jalanmy_private','usage') then raise exception 'Private tables exposed'; end if;
+ if has_table_privilege('authenticated','jalanmy_private.reports','select') then raise exception 'Private tables exposed'; end if;
+ if has_function_privilege('authenticated','jalanmy_private.quota(text,integer)','execute') then raise exception 'Internal helper exposed'; end if;
 end$$;

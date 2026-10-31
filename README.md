@@ -4,6 +4,8 @@ Android navigation app source: MapLibre, foreground GPS, car/motorcycle/bicycle/
 
 **Status:** source integration is in progress. The previously delivered APK is a local prototype. The new source still needs live provider credentials, database setup, real-service integration checks and physical-device testing before it can be called complete. No paid hosting is authorized; the owner's budget is RM0.
 
+Supabase project `jalanmy` has now been created in SUNFLY SYSTEM (Free), Singapore, ref `ufgkkmqgzuuhumsswfwn`. Community schema and permission tests passed on the live database with test records rolled back. The public project URL/publishable key are in `src/project-config.ts`. Guest sign-in activation requires the owner's specific approval; Geoapify is still not configured. Private tables intentionally have RLS enabled with no direct client policies; only the restricted RPC surface is granted.
+
 ## RM0 service option
 
 Geoapify Free handles maps/search/routing (3,000 credits/day, required attribution, quota shared across API usage). Supabase Free handles anonymous sessions and shared reports (500 MB database, 5 GB egress, can pause after inactivity). These limits are real; they do not provide unlimited Waze-scale traffic or live congestion data.
