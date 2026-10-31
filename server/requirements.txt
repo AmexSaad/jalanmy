@@ -1,0 +1,2 @@
+gunicorn==23.0.0
+osmium==4.1.1

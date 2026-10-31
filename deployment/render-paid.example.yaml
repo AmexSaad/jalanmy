@@ -1,0 +1,50 @@
+# Review the current monthly cost in Render before applying this paid blueprint.
+services:
+  - type: pserv
+    name: jalanmy-routing
+    runtime: image
+    region: singapore
+    plan: pro
+    image:
+      url: ghcr.io/valhalla/valhalla-scripted:latest
+    envVars:
+      - key: tile_urls
+        value: https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf
+      - key: server_threads
+        value: '1'
+      - key: build_elevation
+        value: 'False'
+      - key: build_transit
+        value: 'False'
+      - key: PORT
+        value: '8002'
+    disk:
+      name: routing-data
+      mountPath: /custom_files
+      sizeGB: 20
+  - type: web
+    name: jalanmy-api
+    runtime: docker
+    region: singapore
+    plan: standard
+    dockerfilePath: server/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_PATH
+        value: /data/reports.sqlite
+      - key: PLACES_PATH
+        value: /data/places.sqlite
+      - key: VALHALLA_HOST
+        fromService:
+          name: jalanmy-routing
+          type: pserv
+          property: host
+      - key: ALLOWED_ORIGINS
+        value: https://localhost,http://localhost
+      - key: ADMIN_TOKEN
+        generateValue: true
+    disk:
+      name: api-data
+      mountPath: /data
+      sizeGB: 5

@@ -27,6 +27,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          VITE_API_URL: ${{ vars.JALANMY_API_URL }}
+          VITE_TILE_URL: ${{ vars.JALANMY_TILE_URL }}
+          VITE_GEOAPIFY_KEY: ${{ vars.JALANMY_GEOAPIFY_KEY }}
+          VITE_SUPABASE_URL: ${{ vars.JALANMY_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.JALANMY_SUPABASE_ANON_KEY }}
       - run: npx cap add android
       - run: node scripts/prepare-android.mjs
       - run: npx cap sync android

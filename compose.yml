@@ -1,0 +1,32 @@
+services:
+  routing:
+    image: ghcr.io/valhalla/valhalla-scripted:latest
+    environment:
+      tile_urls: https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf
+      server_threads: 2
+      build_elevation: 'False'
+      build_transit: 'False'
+    volumes:
+      - routing:/custom_files
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    environment:
+      VALHALLA_URL: http://routing:8002
+      DATABASE_PATH: /data/reports.sqlite
+      PLACES_PATH: /data/places.sqlite
+      ALLOWED_ORIGINS: https://localhost,http://localhost,http://localhost:5173,http://127.0.0.1:5173
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?Set ADMIN_TOKEN in the server environment}
+    volumes:
+      - data:/data
+      - routing:/osm:ro
+    ports:
+      - '127.0.0.1:8080:8080'
+    restart: unless-stopped
+    depends_on:
+      - routing
+volumes:
+  data:
+  routing:

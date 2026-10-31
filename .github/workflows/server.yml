@@ -1,0 +1,36 @@
+name: Server checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest server.test_app -v
+      - run: pip install -r server/requirements.txt
+      - name: Validate container build
+        run: docker build -f server/Dockerfile -t jalanmy-api .
+  reports-sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: local-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate schema, permissions and report confirmations
+        env:
+          PGPASSWORD: local-ci-only
+        run: psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f supabase/tests/setup.sql -f supabase/migrations/202610310001_reports.sql -f supabase/tests/check.sql
